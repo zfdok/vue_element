@@ -53,7 +53,6 @@ export default {
       this.$refs.login_formRef.validate(async value => {
         if (!value) return
         const result = await this.$http.post('login', this.formdata)
-        console.log(result.data)
         if (result.data.meta.status !== 200) {
           return this.$message({
             showClose: true,
