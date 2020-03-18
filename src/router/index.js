@@ -13,19 +13,24 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login
+  },
+  {
+    path: '/Home',
+    name: 'Home',
+    component: () => import('../components/Home.vue')
   }
-  // {
-  //   path: '/about',
-  //   name: 'About',
-  //   // route level code-splitting
-  //   // this generates a separate chunk (about.[hash].js) for this route
-  //   // which is lazy-loaded when the route is visited.
-  //   component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
-  // }
 ]
 
 const router = new VueRouter({
   routes
+})
+
+// 挂载路由导航守卫
+router.beforeEach((to, from, next) => { // 这就是页面跳转过程
+  if (to.path === '/login') next()
+  const token = window.sessionStorage.getItem('token')
+  if (!token) return next('/login')
+  next()
 })
 
 export default router

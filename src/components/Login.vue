@@ -13,7 +13,7 @@
             <el-input prefix-icon="el-icon-lock" v-model="formdata.password" type="password"></el-input>
           </el-form-item>
           <el-form-item class="login_btn">
-            <el-button type="primary">登录</el-button>
+            <el-button type="primary" @click="login">登录</el-button>
             <el-button type="info" @click="resetLoginForm">重置</el-button>
           </el-form-item>
         </el-form>
@@ -28,8 +28,8 @@ export default {
   data () {
     return {
       formdata: {
-        username: '',
-        password: ''
+        username: 'admin',
+        password: '123456'
       },
       rules: {
         username: [
@@ -48,6 +48,27 @@ export default {
       this.formdata.username = ''
       this.formdata.password = ''
       this.$refs.login_formRef.resetFields()
+    },
+    login () {
+      this.$refs.login_formRef.validate(async value => {
+        if (!value) return
+        const result = await this.$http.post('login', this.formdata)
+        console.log(result.data)
+        if (result.data.meta.status !== 200) {
+          return this.$message({
+            showClose: true,
+            message: '登录错误!请检查用户名和密码.',
+            type: 'error'
+          })
+        }
+        this.$message({
+          showClose: true,
+          message: '恭喜你，登陆成功',
+          type: 'success'
+        })
+        window.sessionStorage.setItem('token', result.data.data.token)
+        this.$router.push('/home')
+      })
     }
   }
 }
