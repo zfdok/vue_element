@@ -14,14 +14,15 @@
       <el-aside :width="toogled ?' 64px':' 200px'">
         <div class="toogle_btn" @click="menu_toogled">{{toogled ? "👉":"👈"}}</div>
         <el-menu
-          default-active="110"
           class="el-menu-vertical-demo"
           background-color="#303540"
           text-color="#fff"
+          :default-active="default_active"
           active-text-color="#409bfe"
           unique-opened
           :collapse="toogled"
           :collapse-transition="false"
+          router
         >
           <el-submenu v-for="(menu, index) in menudata" :key="index" :index="menu.id.toString()">
             <template slot="title">
@@ -31,7 +32,8 @@
             <el-menu-item
               v-for="(submenu, subindex) in menu.children"
               :key="subindex"
-              :index="submenu.id.toString()"
+              :index="'/'+submenu.path"
+              @click="saveNavState(submenu.path)"
             >
               <i class="el-icon-menu"></i>
               <span>{{submenu.authName}}</span>
@@ -39,7 +41,9 @@
           </el-submenu>
         </el-menu>
       </el-aside>
-      <el-main>{{this.menudata}}</el-main>
+      <el-main>
+        <router-view></router-view>
+      </el-main>
     </el-container>
   </el-container>
 </template>
@@ -49,6 +53,7 @@ export default {
   home: 'Home',
   data () {
     return {
+      default_active: '',
       menudata: [],
       toogled: false,
       iconObj: {
@@ -71,15 +76,19 @@ export default {
     },
     menu_toogled () {
       this.toogled = !this.toogled
+    },
+    saveNavState (path) {
+      this.default_active = '/' + path
+      window.sessionStorage.setItem('default_active', '/' + path)
     }
   },
   created () {
     this.$http.get('menus').then(res => {
-      console.log(res.data.data)
       if (res.status === 200) {
         this.menudata = res.data.data
       }
     })
+    this.default_active = window.sessionStorage.getItem('default_active')
   }
 }
 </script>
