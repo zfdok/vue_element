@@ -39,8 +39,8 @@
         </el-table-column>
         <el-table-column label="操作" width="220">
           <el-button-group slot-scope="scope">
-            <el-button type="primary" icon="el-icon-edit" @click="user_edit(scope)"></el-button>
-            <el-button type="danger" icon="el-icon-delete"></el-button>
+            <el-button type="primary" icon="el-icon-edit" @click="user_edit(scope.row.id)"></el-button>
+            <el-button type="danger" icon="el-icon-delete" @click="user_delete(scope.row.id)"></el-button>
             <el-tooltip
               class="item"
               effect="dark"
@@ -80,8 +80,8 @@
           <el-form-item label="密码" prop="password" required>
             <el-input v-model="addForm.password" show-password></el-input>
           </el-form-item>
-          <el-form-item label="邮箱" prop="mail" required>
-            <el-input v-model="addForm.mail"></el-input>
+          <el-form-item label="邮箱" prop="email" required>
+            <el-input v-model="addForm.email"></el-input>
           </el-form-item>
           <el-form-item label="手机" prop="mobile" required>
             <el-input v-model="addForm.mobile"></el-input>
@@ -105,17 +105,24 @@
           <el-form-item label="用户名" prop="name">
             <el-input v-model="nowEditing.username" disabled></el-input>
           </el-form-item>
-          <el-form-item label="邮箱" prop="email" >
+          <el-form-item label="邮箱" prop="email">
             <el-input v-model="nowEditing.email"></el-input>
           </el-form-item>
-          <el-form-item label="手机" prop="mobile" >
+          <el-form-item label="手机" prop="mobile">
             <el-input v-model="nowEditing.mobile"></el-input>
           </el-form-item>
         </el-form>
       </span>
       <span slot="footer" class="dialog-footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="editDialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="uploadUserEdit">确 定</el-button>
+      </span>
+    </el-dialog>
+    <el-dialog title="删除用户" :visible.sync="deleteDialogVisible" width="30%" center>
+      <span>确定要删除此用户吗??</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="deleteDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="uploadUserDel">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -150,10 +157,11 @@ export default {
       total: 0,
       dialogVisible: false,
       editDialogVisible: false,
+      deleteDialogVisible: false,
       addForm: {
         username: '范冰冰',
         password: '123123',
-        mail: 'fbb@girls.com',
+        email: 'fbb@girls.com',
         mobile: '13546554628'
       },
       addFormRules: {
@@ -165,7 +173,7 @@ export default {
           { required: true, message: '请输入密码', trigger: 'blur' },
           { min: 3, max: 15, message: '长度在 3 到 15 个字符', trigger: 'blur' }
         ],
-        mail: [
+        email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
           { validator: checkMail, trigger: 'blur' }
         ],
@@ -174,7 +182,12 @@ export default {
           { validator: checkMobile, trigger: 'blur' }
         ]
       },
-      nowEditing: {},
+      nowEditing: {
+        username: '',
+        email: '',
+        mobile: '',
+        id: ''
+      },
       editRules: {
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
@@ -188,10 +201,44 @@ export default {
     }
   },
   methods: {
-    user_edit (scope) {
-      console.log(scope.row)
-      this.nowEditing = scope.row
+    async user_edit (id) {
+      const { data: res } = await this.$http.get('/users/' + id)
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      this.nowEditing.username = res.data.username
+      this.nowEditing.email = res.data.email
+      this.nowEditing.mobile = res.data.mobile
+      this.nowEditing.id = res.data.id
       this.editDialogVisible = true
+    },
+    async user_delete (id) {
+      this.deleteDialogVisible = true
+      this.nowEditing.id = id
+      console.log(this.nowEditing.id)
+    },
+    uploadUserEdit () {
+      this.$refs.editFormRef.validate(async (value, obj) => {
+        if (value) {
+          const { data: res } = await this.$http.put(
+            '/users/' + this.nowEditing.id,
+            this.nowEditing
+          )
+          if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+          this.editDialogVisible = false
+          this.getUserList()
+          return this.$message({
+            showClose: true,
+            message: '修改成功~!',
+            type: 'success'
+          })
+        }
+      })
+    },
+    async uploadUserDel () {
+      const { data: res } = await this.$http.delete('/users/' + this.nowEditing.id)
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      this.getUserList()
+      this.deleteDialogVisible = false
+      return this.$message.success('删除成功!')
     },
     handleSizeChange (value) {
       this.query_info.params.pagesize = value
