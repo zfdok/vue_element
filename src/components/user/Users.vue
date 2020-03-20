@@ -213,7 +213,6 @@ export default {
     async user_delete (id) {
       this.deleteDialogVisible = true
       this.nowEditing.id = id
-      console.log(this.nowEditing.id)
     },
     uploadUserEdit () {
       this.$refs.editFormRef.validate(async (value, obj) => {
@@ -257,10 +256,8 @@ export default {
       this.userList = res.data.data.users
     },
     async userStateChange (userinfo) {
-      console.log(userinfo)
       const str = '/users/' + userinfo.id + '/state/' + userinfo.mg_state
       const res = await this.$http.put(str)
-      console.log(res)
       if (res.data.meta.status !== 200) {
         userinfo.mg_state = !userinfo.mg_state
         return this.$message.error(res.data.meta.msg)
@@ -280,7 +277,6 @@ export default {
     checkAddForm () {
       this.$refs.addFormRef.validate(async (value, obj) => {
         if (value) {
-          console.log('haha')
           const { data: res } = await this.$http.post('/users', this.addForm)
           if (res.meta.status !== 201) return this.$message.error(res.meta.msg)
           this.dialogVisible = false
@@ -290,7 +286,6 @@ export default {
             type: 'success'
           })
         }
-        console.log(value)
         return this.$message.error('填写信息有误')
       })
     }
