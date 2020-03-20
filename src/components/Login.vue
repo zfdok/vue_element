@@ -2,7 +2,7 @@
   <div class="login_container">
     <div class="login_box">
       <div class="avtar">
-        <img src="../assets/logo.png" alt />
+        <img src="https://s1.ax1x.com/2020/03/20/8gnMy8.md.jpg" alt />
       </div>
       <div>
         <el-form ref="login_formRef" class="login_form" :model="formdata" :rules="rules">

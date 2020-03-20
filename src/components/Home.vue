@@ -3,7 +3,7 @@
     <el-header>
       <div class="head_logo">
         <img
-          src="https://dss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/logo_white-c4d7df0a00.png"
+          src="https://s1.ax1x.com/2020/03/20/8cLrIs.png"
           alt
         />
         <span>管理系统</span>

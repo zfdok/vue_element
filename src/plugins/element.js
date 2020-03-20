@@ -1,8 +1,34 @@
 import Vue from 'vue'
 import {
-  Button, Form, FormItem, Input, Message, Container, Header, Main, Aside, Menu, MenuItem, Submenu, Icon, MenuItemGroup,
-  Breadcrumb, BreadcrumbItem, Card, Row, Col, Table, TableColumn, Pagination, ButtonGroup, Dialog,
-  Switch, Tooltip, Tag
+  Button,
+  Form,
+  FormItem,
+  Input,
+  Message,
+  Container,
+  Header,
+  Main,
+  Aside,
+  Menu,
+  MenuItem,
+  Submenu,
+  Icon,
+  MenuItemGroup,
+  Breadcrumb,
+  BreadcrumbItem,
+  Card,
+  Row,
+  Col,
+  Table,
+  TableColumn,
+  Pagination,
+  ButtonGroup,
+  Dialog,
+  Switch,
+  Tooltip,
+  Tag,
+  MessageBox,
+  Tree
 } from 'element-ui'
 
 Vue.use(Button)
@@ -31,5 +57,7 @@ Vue.use(Button)
   .use(Pagination)
   .use(Dialog)
   .use(Tag)
+  .use(Tree)
 
 Vue.prototype.$message = Message
+Vue.prototype.$confirm = MessageBox
