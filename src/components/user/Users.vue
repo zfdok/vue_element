@@ -50,7 +50,11 @@
               :open-delay="200"
               :hide-after="2000"
             >
-              <el-button type="warning" icon="el-icon-magic-stick"></el-button>
+              <el-button
+                type="warning"
+                icon="el-icon-magic-stick"
+                @click="editRoleBtnClick(scope.row)"
+              ></el-button>
             </el-tooltip>
           </el-button-group>
         </el-table-column>
@@ -65,6 +69,7 @@
         :total="total"
       ></el-pagination>
     </el-card>
+    <!-- 添加用户弹窗 -->
     <el-dialog title="添加用户" :visible.sync="dialogVisible" width="30%" @closed="add_dlg_closed">
       <span>
         <el-form
@@ -93,6 +98,7 @@
         <el-button type="primary" @click="checkAddForm">确 定</el-button>
       </span>
     </el-dialog>
+    <!-- 修改用户弹窗 -->
     <el-dialog title="修改用户" :visible.sync="editDialogVisible" width="50%" @closed="edit_dlg_closed">
       <span>
         <el-form
@@ -118,11 +124,38 @@
         <el-button type="primary" @click="uploadUserEdit">确 定</el-button>
       </span>
     </el-dialog>
+    <!-- 删除用户弹窗 -->
     <el-dialog title="删除用户" :visible.sync="deleteDialogVisible" width="30%" center>
       <span>确定要删除此用户吗??</span>
       <span slot="footer" class="dialog-footer">
         <el-button @click="deleteDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="uploadUserDel">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- 分配角色弹窗 -->
+    <el-dialog
+      title="分配角色"
+      :visible.sync="editRoleDialogVisible"
+      width="40%"
+      @closed="oneditRoleDialogClosed"
+    >
+      <p>当前用户:{{editingRoleUser.username}}</p>
+      <p>当前角色:{{editingRoleUser.role_name}}</p>
+      <p>
+        指定新角色:
+        <el-select v-model="userNewRole" placeholder="请选择">
+          <el-option
+            v-for="item in allRolesList"
+            :key="item.id"
+            :label="item.roleName"
+            :value="item.id"
+          ></el-option>
+        </el-select>
+      </p>
+      <p>{{userNewRole}}</p>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editRoleDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="uploadUserNewRole">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -131,6 +164,7 @@
 <script>
 export default {
   data () {
+    // 验证邮箱规则
     var checkMail = (rule, value, callback) => {
       var reg = /^\w+((.\w+)|(-\w+))@[A-Za-z0-9]+((.|-)[A-Za-z0-9]+).[A-Za-z0-9]+$/
       if (!reg.test(value)) {
@@ -138,6 +172,7 @@ export default {
       }
       callback()
     }
+    // 验证手机规则
     var checkMobile = (rule, value, callback) => {
       if (!/^1[3456789]\d{9}$/.test(value)) {
         return callback(new Error('手机号格式错误'))
@@ -158,6 +193,7 @@ export default {
       dialogVisible: false,
       editDialogVisible: false,
       deleteDialogVisible: false,
+      editRoleDialogVisible: false, // 编辑用户角色信息弹窗显示否
       addForm: {
         username: '范冰冰',
         password: '123123',
@@ -197,10 +233,49 @@ export default {
           { required: true, message: '请输入手机号', trigger: 'blur' },
           { validator: checkMobile, trigger: 'blur' }
         ]
-      }
+      },
+      // 正在分配角色的用户
+      editingRoleUser: {},
+      // 所有角色列表
+      allRolesList: [],
+      // 用户的新角色
+      userNewRole: null
     }
   },
   methods: {
+    // 分配角色按钮点击事件
+    async editRoleBtnClick (role) {
+      console.log(role)
+      this.editingRoleUser = role
+      this.editRoleDialogVisible = true
+      const { data: res } = await this.$http.get('/roles')
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      console.log(res.data)
+      this.allRolesList = res.data
+    },
+    // 分配角色弹窗被关闭时
+    oneditRoleDialogClosed () {
+      this.editingRoleUser = {}
+      this.userNewRole = null
+    },
+    // 上传用户新角色
+    async uploadUserNewRole () {
+      if (!this.userNewRole) return this.$message.error('请选择角色')
+      const { data: res } = await this.$http.put(
+        `/users/${this.editingRoleUser.id}/role`,
+        {
+          rid: this.userNewRole
+        }
+      )
+      console.log(res)
+
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      this.editRoleDialogVisible = false
+      this.editingRoleUser = {}
+      this.getUserList()
+      return this.$message.success(res.meta.msg)
+    },
+    // 编辑用户按钮
     async user_edit (id) {
       const { data: res } = await this.$http.get('/users/' + id)
       if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
@@ -210,10 +285,12 @@ export default {
       this.nowEditing.id = res.data.id
       this.editDialogVisible = true
     },
+    // 删除用户按钮
     async user_delete (id) {
       this.deleteDialogVisible = true
       this.nowEditing.id = id
     },
+    // 上传用户编辑信息
     uploadUserEdit () {
       this.$refs.editFormRef.validate(async (value, obj) => {
         if (value) {
@@ -232,21 +309,27 @@ export default {
         }
       })
     },
+    // 上传用户删除信息
     async uploadUserDel () {
-      const { data: res } = await this.$http.delete('/users/' + this.nowEditing.id)
+      const { data: res } = await this.$http.delete(
+        '/users/' + this.nowEditing.id
+      )
       if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
       this.getUserList()
       this.deleteDialogVisible = false
       return this.$message.success('删除成功!')
     },
+    // 页面长度改变
     handleSizeChange (value) {
       this.query_info.params.pagesize = value
       this.getUserList()
     },
+    // 页码改变
     handleCurrentChange (value) {
       this.query_info.params.pagenum = value
       this.getUserList()
     },
+    // 获取用户列表
     async getUserList () {
       const res = await this.$http.get('users', this.query_info)
       if (res.data.meta.status !== 200) {
@@ -255,6 +338,7 @@ export default {
       this.total = res.data.data.total
       this.userList = res.data.data.users
     },
+    // 改变用户状态
     async userStateChange (userinfo) {
       const str = '/users/' + userinfo.id + '/state/' + userinfo.mg_state
       const res = await this.$http.put(str)
