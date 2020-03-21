@@ -6,7 +6,7 @@
           src="https://s1.ax1x.com/2020/03/20/8cLrIs.png"
           alt
         />
-        <span>管理系统</span>
+        <span>平台用户管理系统</span>
       </div>
       <el-button @click="exit_login" type="info">退出</el-button>
     </el-header>

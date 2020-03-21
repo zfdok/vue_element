@@ -140,19 +140,26 @@
         </span>
       </el-dialog>
       <!-- 分配权限对话框 -->
-      <el-dialog title="分配权限" :visible.sync="addRightDialogVisible" width="70%">
+      <el-dialog
+        title="分配权限"
+        :visible.sync="addRightDialogVisible"
+        width="70%"
+        @closed="addRightDialogClosed"
+      >
         <span>
           <el-tree
             :data="allRights"
             show-checkbox
             node-key="id"
+            ref="tree"
             :props="defaultProps"
             :default-checked-keys="defaultCheckedKeys"
+            default-expand-all
           ></el-tree>
         </span>
         <span slot="footer" class="dialog-footer">
           <el-button @click="addRightDialogVisible = false">取 消</el-button>
-          <el-button type="primary" @click="addRightDialogVisible = false">确 定</el-button>
+          <el-button type="primary" @click="uploadEditRights">确 定</el-button>
         </span>
       </el-dialog>
     </el-card>
@@ -179,6 +186,7 @@ export default {
         ]
       },
       editingId: null,
+      editRightRoleId: null,
       roleEditData: {
         roleName: '',
         roleDesc: ''
@@ -198,8 +206,32 @@ export default {
     }
   },
   methods: {
+    async uploadEditRights () {
+      const selectedKeys = [
+        ...this.$refs.tree.getCheckedKeys(),
+        ...this.$refs.tree.getHalfCheckedKeys()
+      ]
+      const keysStr = selectedKeys.join(',')
+      console.log(keysStr)
+      console.log(this.editRightRoleId)
+      const { data: res } = await this.$http.post(
+        `roles/${this.editRightRoleId}/rights`,
+        {
+          rids: keysStr
+        }
+      )
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      this.editRightRoleId = null
+      this.addRightDialogVisible = false
+      this.getRolesList()
+      return this.$message.success(res.meta.msg)
+    },
+    addRightDialogClosed () {
+      this.defaultCheckedKeys = []
+    },
     // 添加权限按钮点击
     async showAddRightsDlg (role) {
+      this.editRightRoleId = role.id
       this.addRightDialogVisible = true
       const { data: res } = await this.$http.get('/rights/tree')
       if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
@@ -211,12 +243,9 @@ export default {
           })
         })
       })
-      console.log(this.defaultCheckedKeys)
     },
     removeRightById (role, rightId) {
-      console.log(role.id)
-      console.log(rightId)
-      this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+      this.$confirm('此操作将取消该用户的此权限, 是否继续?', '取消权限', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
@@ -237,10 +266,23 @@ export default {
         })
     },
     async roleDle (id) {
-      const { data: res } = await this.$http.delete('/roles/' + id)
-      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
-      this.getRolesList()
-      return this.$message.success(res.meta.msg)
+      this.$confirm('确认删除此角色??', '删除角色', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(async () => {
+          const { data: res } = await this.$http.delete('/roles/' + id)
+          if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+          this.getRolesList()
+          return this.$message.success(res.meta.msg)
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          })
+        })
     },
     async roleEdit (id) {
       this.editRoleDialogVisible = true
@@ -254,7 +296,6 @@ export default {
       this.$refs.roleAddDataRef.validate(async (value, obj) => {
         if (!value) return
         const { data: res } = await this.$http.post('/roles', this.roleAddData)
-        console.log(res)
         if (res.meta.status !== 201) return this.$message.error(res.meta.msg)
         this.getRolesList()
         this.addRoleDialogVisible = false
@@ -264,7 +305,6 @@ export default {
     uploadEditRole (id) {
       this.$refs.roleEditDataRef.validate(async (value, obj) => {
         if (!value) return
-        console.log(typeof this.roleEditData.id)
         const { data: res } = await this.$http.put(
           '/roles/' + this.editingId,
           this.roleEditData
