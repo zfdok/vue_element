@@ -212,8 +212,6 @@ export default {
         ...this.$refs.tree.getHalfCheckedKeys()
       ]
       const keysStr = selectedKeys.join(',')
-      console.log(keysStr)
-      console.log(this.editRightRoleId)
       const { data: res } = await this.$http.post(
         `roles/${this.editRightRoleId}/rights`,
         {
